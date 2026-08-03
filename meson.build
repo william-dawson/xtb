@@ -141,7 +141,8 @@ xtb_dep_static = declare_dependency(
 xtb_exe = executable(
   meson.project_name(),
   sources: prog,
-  dependencies: xtb_dep_static,
+  dependencies: xtb_dep,
+  link_with: xtb_common,
   link_language: 'fortran',
   install: install,
   fortran_args: [
