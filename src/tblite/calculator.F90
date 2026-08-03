@@ -78,6 +78,15 @@ module xtb_tblite_calculator
    endtype
 
    !> Input for tblite library
+   !> Input for the solvation model in the tblite library
+   type :: TTBLiteSolvationInput
+      !> Solvation model name
+      character(len=:), allocatable :: solvation_model
+      !> Solvent name
+      character(len=:), allocatable :: solvent
+      !> Solvation reference state
+      character(len=:), allocatable :: reference_state
+   end type TTBLiteSolvationInput
    type :: TTBLiteInput
       !> Perform a spin-polarized calculation
       logical :: spin_polarized = .false.
@@ -100,16 +109,6 @@ module xtb_tblite_calculator
       !> Solvation model input
       type(TTBLiteSolvationInput), allocatable :: solvation
    end type TTBLiteInput
-
-   !> Input for the solvation model in the tblite library
-   type :: TTBLiteSolvationInput
-      !> Solvation model name
-      character(len=:), allocatable :: solvation_model
-      !> Solvent name
-      character(len=:), allocatable :: solvent
-      !> Solvation reference state
-      character(len=:), allocatable :: reference_state
-   end type TTBLiteSolvationInput
 
    !> Calculator interface for xTB based methods
    type, extends(TCalculator) :: TTBLiteCalculator
