@@ -33,6 +33,11 @@ module xtb_oniom
    use xtb_extern_orca, only: TOrcaCalculator, newOrcaCalculator
    use xtb_extern_turbomole, only: TTMCalculator, newTMCalculator
    use xtb_setparam, only: set
+   use xtb_fixparam
+   use xtb_scanparam, only: potset
+   use xtb_sphereparam, only: cavity_egrad
+   use xtb_metadynamic, only: metadynamic
+   use xtb_constrainpot, only: constrain_pot
 
    implicit none
    private
@@ -187,6 +192,8 @@ subroutine newOniomCalculator(self, env, mol, input)
 
    end select
 
+   set%oniom_active = .true.
+
 end subroutine newOniomCalculator
 
 !> 3 singlepoint energy calculations
@@ -255,6 +262,7 @@ subroutine singlepoint(self, env, mol, chk, printlevel, restart, energy, gradien
    integer,allocatable :: idx2(:)
    integer :: i, coord_unit
    logical :: exitRun
+   real(wp) :: efix
 
    ! check whether the calculator is initialized !
    if (.not. allocated(self%real_low)) then
@@ -479,7 +487,24 @@ subroutine singlepoint(self, env, mol, chk, printlevel, restart, energy, gradien
    do i = 1, size(idx2)
       gradient(:, idx2(i)) = gradient(:, idx2(i)) + gradient_high(:, i) - gradient_low(:, i) 
    end do 
-   results%gnorm=norm2(gradient)   
+   results%gnorm=norm2(gradient)
+
+   ! Apply constraints at the ONIOM level (full system, correct atom indices)
+   efix = 0.0_wp
+   call constrain_pot(potset, mol%n, mol%at, mol%xyz, gradient, efix)
+   call constrpot   (mol%n, mol%at, mol%xyz, gradient, efix)
+   call cavity_egrad(mol%n, mol%at, mol%xyz, efix, gradient)
+   call metadynamic (metaset, mol%n, mol%at, mol%xyz, efix, gradient)
+   call metadynamic (rmsdset, mol%n, mol%at, mol%xyz, efix, gradient)
+   energy = energy + efix
+   results%e_total = energy
+   results%gnorm = norm2(gradient)
+   if (fixset%n.gt.0) then
+      do i=1, fixset%n
+         gradient(1:3,fixset%atoms(i))=0
+      enddo
+   endif
+
    deallocate(gradient_high)
    deallocate(gradient_low)
 

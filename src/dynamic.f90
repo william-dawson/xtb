@@ -293,6 +293,7 @@ subroutine md(env,mol,chk,calc, &
    if(set%mdrtrconstr ) nfreedom = nfreedom - 6.0d0
    if(set%shake_md    ) nfreedom = nfreedom - dble(ncons)
    if(zconstr.eq.1) nfreedom = nfreedom - dble(iatf1)  ! fragment 1 in Z plane
+   if(set%oniom_active .and. fixset%n > 0) nfreedom = nfreedom - 3.0d0*dble(fixset%n)
    write(*,'('' # deg. of freedom  :'',i6  )')idint(nfreedom)
 
    taut=500. ! damping of thermostat, 1000 is slow heating
@@ -306,8 +307,18 @@ subroutine md(env,mol,chk,calc, &
       if(.not.thermostat) f = 2
       edum=f*Tinit*0.5*kB*nfreedom
       call mdinitu(mol%n,mol%at,velo,mass,edum)
+      if(set%oniom_active .and. fixset%n > 0) then
+         do i = 1, fixset%n
+            velo(:,fixset%atoms(i)) = 0.0_wp
+         enddo
+      endif
    else
       call rdmdrestart(mol%n,mol%xyz,velo)
+      if(set%oniom_active .and. fixset%n > 0) then
+         do i = 1, fixset%n
+            velo(:,fixset%atoms(i)) = 0.0_wp
+         enddo
+      endif
    endif
 
    if(set%shake_md) then
@@ -559,6 +570,11 @@ subroutine md(env,mol,chk,calc, &
       enddo
 
       call zeroz(mol%n,acc) ! z-plane fix
+      if(set%oniom_active .and. fixset%n > 0) then
+         do i = 1, fixset%n
+            acc(:,fixset%atoms(i)) = 0.0_wp
+         enddo
+      endif
       ! call zero3n6(mol%n,velo,acc) ! fix 6 deg. of freedom
 
       ! store positions (at t); velocities are at t-1/2dt
@@ -622,6 +638,11 @@ subroutine md(env,mol,chk,calc, &
 
       ! remove trans/rot velocities
       call rmrottr(mol%n,mass,velo,mol%xyz)
+      if(set%oniom_active .and. fixset%n > 0) then
+         do i = 1, fixset%n
+            velo(:,fixset%atoms(i)) = 0.0_wp
+         enddo
+      endif
 
       ! average internal coords
       if(gmd)then

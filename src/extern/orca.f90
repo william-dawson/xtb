@@ -668,11 +668,13 @@ contains
       end if
 
       ! various external potentials !
+      if (.not. set%oniom_active) then
       call constrain_pot(potset, mol%n, mol%at, mol%xyz, gradient, efix)
       call constrpot(mol%n, mol%at, mol%xyz, gradient, efix)
       call cavity_egrad(mol%n, mol%at, mol%xyz, efix, gradient)
       call metadynamic(metaset, mol%n, mol%at, mol%xyz, efix, gradient)
       call metadynamic(rmsdset, mol%n, mol%at, mol%xyz, efix, gradient)
+      endif
       energy = energy + efix
 
       ! save results !
@@ -681,7 +683,7 @@ contains
       results%dipole = dipole
 
       ! exact fixing !
-      if (fixset%n .gt. 0) then
+      if (fixset%n .gt. 0 .and. .not. set%oniom_active) then
          do i = 1, fixset%n
             gradient(1:3, fixset%atoms(i)) = 0
          end do

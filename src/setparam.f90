@@ -526,6 +526,7 @@ module xtb_setparam
    !> GFN-FF manual setup of nb list via xcontrol
    !  ffnb(42,i) stores the number of neighbors of atom i
    integer, allocatable :: ffnb(:,:)
+   logical  :: oniom_active = .false.
    end type TSet
 
    type(TSet) :: set
